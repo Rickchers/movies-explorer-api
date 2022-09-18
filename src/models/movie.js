@@ -1,5 +1,5 @@
 const mongoose = require('mongoose');
-// eslint-disable-next-line no-unused-vars
+
 const validator = require('validator');
 const { regex } = require('../../constants');
 
@@ -60,7 +60,7 @@ const movieSchema = new mongoose.Schema({
   },
 
   movieId: {
-    type: mongoose.Schema.Types.ObjectId,
+    type: Number,
     required: true,
   },
 

@@ -6,6 +6,7 @@ const { NODE_ENV, JWT_SECRET } = process.env;
 
 const ConflictRequest = require('../errors/conflicting-request');
 const Badrequest = require('../errors/badrequest');
+const Unauthorized = require('../errors/unauthorized');
 
 const { User } = require('../models/user');
 
@@ -20,10 +21,10 @@ exports.getUserProfile = (req, res, next) => {
 
 // обновляет информацию о пользователе (email и имя)
 exports.updateUser = (req, res, next) => {
-  const { name, about } = req.body;
+  const { name, email } = req.body;
   User.findByIdAndUpdate(
     req.user._id,
-    { name, about },
+    { name, email },
     { new: true, runValidators: true },
   )
     .orFail()
@@ -31,6 +32,8 @@ exports.updateUser = (req, res, next) => {
     .catch((err) => {
       if (err.name === 'ValidationError') {
         next(new Badrequest('Переданы некорректные данные'));
+      } else if (err.code === 11000) {
+        next(new ConflictRequest('Переданный почтовый ящик занят другим пользователем'));
       } else {
         next(err);
       }
@@ -55,8 +58,10 @@ exports.createUser = (req, res, next) => {
       res.send(newUser);
     })
     .catch((err) => {
-      if (err.code === 11000) {
-        next(new ConflictRequest('Неправильные почта или пароль'));
+      if (err.name === 'ValidationError') {
+        next(new Badrequest('Переданы некорректные данные'));
+      } else if (err.code === 11000) {
+        next(new Unauthorized('Переданный почтовый ящик занят другим пользователем'));
       } else {
         next(err);
       }
